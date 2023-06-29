@@ -1,2 +1,2 @@
-rootProject.name = "OwnNeural"
+rootProject.name = "Java Implementation of a Neural Network"
 

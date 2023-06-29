@@ -2,42 +2,35 @@ package de.abramov;
 
 import de.abramov.network.INeuralNetwork;
 import de.abramov.network.NeuralNetwork;
+import de.abramov.network.configuration.Configuration;
+import de.abramov.network.functions.Sigmoid;
 import de.abramov.train.TrainDataGenerator;
 import de.abramov.train.data.RealEstate;
-
-import java.util.List;
 
 public class Main {
 
     public static void main(String[] args) {
-        int trainDataSize = 100000;
-        int testDataSize = 100;
-        boolean equalDistribution = true;
-        TrainDataGenerator testDataGenerator = new TrainDataGenerator();
-        List<RealEstate> trainRealEstateDataset = testDataGenerator.getTrainData(trainDataSize, equalDistribution);
-        List<RealEstate> testRealEstateDataset = testDataGenerator.getTrainData(testDataSize, equalDistribution);
-        testDataGenerator.printStatistics(trainRealEstateDataset);
+            int trainDataSize = 10000;
+            int testDataSize = 1000;
+            boolean equalDistribution = true;
+            var testDataGenerator = new TrainDataGenerator();
 
-        // Erstelle das neuronale Netzwerk
-        int inputSize = 2; // Preis und Miete
-        int hiddenSize = 2048; // Anzahl der versteckten Neuronen
-        double learningRate = 0.1;
-        INeuralNetwork neuralNetwork = new NeuralNetwork(inputSize, hiddenSize, learningRate);
+            var trainRealEstateDataset = testDataGenerator.getTrainData(trainDataSize, equalDistribution);
+            var testRealEstateDataset = testDataGenerator.getTrainData(testDataSize, equalDistribution);
 
-        // Trainiere das Netzwerk
-        neuralNetwork.train(trainRealEstateDataset);
+            testDataGenerator.printStatistics(trainRealEstateDataset);
 
-        // Evaluierung des Netzwerks
-        double accuracy = neuralNetwork.evaluate(testRealEstateDataset);
-        System.out.println("Genauigkeit des neuronalen Netzwerks: " + accuracy);
+            // Change these paramter if you want to experiment with the network.
+            var neuralNetworkConfiguration = new Configuration(2, 64, 0.1, new Sigmoid());
 
-        // Beispiel-Vorhersage für ein RealEstate-Objekt
-        RealEstate exampleRealEstateGood = new RealEstate(100000, 1000); // Beispielobjekt mit Preis und Miete
-        RealEstate exampleRealEstateBad = new RealEstate(10000000, 10000); // Beispielobjekt mit Preis und Miete
-        double predictionOfGoodEstate = neuralNetwork.predict(exampleRealEstateGood);
-        double predictionofBadEstate = neuralNetwork.predict(exampleRealEstateBad);
-        System.out.println("Vorhersage für das Beispielobjekt: " + predictionOfGoodEstate + " real estate is worthwhile: "+exampleRealEstateGood.isWorthwhile());
-        System.out.println("Vorhersage für das Beispielobjekt: " + predictionofBadEstate + " real estate is worthwhile: "+exampleRealEstateBad.isWorthwhile());
-    }
+            INeuralNetwork neuralNetwork = new NeuralNetwork(neuralNetworkConfiguration)
+                    .train(trainRealEstateDataset)
+                    .evaluate(testRealEstateDataset);
+
+            //Single Prediction
+            var realEstate = new RealEstate(150000, 700);
+            var prediction = neuralNetwork.predict(realEstate);
+            System.out.println("Single Prediction of: " +realEstate.toString()+": "+ prediction);
+        }
 
 }

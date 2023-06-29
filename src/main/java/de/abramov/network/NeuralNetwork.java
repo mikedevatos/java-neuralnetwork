@@ -1,33 +1,36 @@
 package de.abramov.network;
 
+import de.abramov.network.configuration.Configuration;
 import de.abramov.network.neuron.Neuron;
 import de.abramov.train.data.RealEstate;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 public class NeuralNetwork implements INeuralNetwork {
     private final int inputSize;
     private final int hiddenSize;
-    private List<Neuron> neurons;
+    private final List<Neuron> neurons;
 
-    public NeuralNetwork(int inputSize, int hiddenSize, double learningRate) {
-        this.inputSize = inputSize;
-        this.hiddenSize = hiddenSize;
+    public NeuralNetwork(Configuration configuration) {
+        this.inputSize = configuration.inputSize;
+        this.hiddenSize = configuration.hiddenSize;
+        double learningRate = configuration.learningRate;
 
         neurons = new ArrayList<>();
 
         // Erstelle versteckte Neuronen
         for (int i = 0; i < hiddenSize; i++) {
-            neurons.add(new Neuron(inputSize, learningRate));
+            neurons.add(new Neuron(inputSize, learningRate, configuration.activationFunction));
         }
 
         // Erstelle Ausgabeneuron
-        neurons.add(new Neuron(hiddenSize, learningRate));
+        neurons.add(new Neuron(hiddenSize, learningRate, configuration.activationFunction));
     }
 
     @Override
-    public void train(List<RealEstate> trainingData) {
+    public NeuralNetwork train(List<RealEstate> trainingData) {
         for (RealEstate realEstate : trainingData) {
             double[] inputs = new double[inputSize];
             inputs[0] = realEstate.getPrice();
@@ -40,18 +43,16 @@ public class NeuralNetwork implements INeuralNetwork {
                 hiddenOutputs[i] = neurons.get(i).feedForward(inputs);
             }
 
-            // Feedforward für Ausgabeneuron
-            double output = neurons.get(hiddenSize).feedForward(hiddenOutputs);
+            // Feedforward for output neuron
+            neurons.get(hiddenSize).feedForward(hiddenOutputs);
 
-            // Backpropagation für Ausgabeneuron
-            neurons.get(hiddenSize).train(hiddenOutputs, target);
+            // Backpropagation for hidden neurons
+            this.backpropagate(inputs, target);
 
-            // Backpropagation für versteckte Neuronen
-            for (int i = hiddenSize - 1; i >= 0; i--) {
-                Neuron neuron = neurons.get(i);
-                neuron.train(inputs, target);
-            }
+            // Backpropagation for output neuron
+            neurons.get(hiddenSize).backpropagate(hiddenOutputs, target);
         }
+        return this;
     }
 
 
@@ -59,28 +60,29 @@ public class NeuralNetwork implements INeuralNetwork {
     public double predict(RealEstate realEstate) {
         double[] inputs = { realEstate.getPrice(), realEstate.getRent() };
 
-        // Feedforward
-        double[] hiddenOutputs = new double[hiddenSize];
-        for (int i = 0; i < hiddenSize; i++) {
-            hiddenOutputs[i] = neurons.get(i).feedForward(inputs);
-        }
+        double[] hiddenOutputs = IntStream.range(0, hiddenSize)
+                .parallel()
+                .mapToDouble(i -> neurons.get(i).feedForward(inputs))
+                .toArray();
 
-        // Rückgabe der Vorhersage des Ausgabeneurons
         return neurons.get(hiddenSize).feedForward(hiddenOutputs);
     }
 
 
+
     @Override
     public void backpropagate(double[] inputs, double target) {
-        for (int i = neurons.size() - 1; i >= 0; i--) {
+        for (int i = hiddenSize - 1; i >= 0; i--) {
             Neuron neuron = neurons.get(i);
             neuron.backpropagate(inputs, target);
         }
     }
 
     @Override
-    public double evaluate(List<RealEstate> testData) {
-        int correctPredictions = 0;
+    public NeuralNetwork evaluate(List<RealEstate> testData) {
+        double correctPredictions = 0;
+        double totalLoss = 0;
+
         for (RealEstate realEstate : testData) {
             double prediction = predict(realEstate);
             boolean predictedIsWorthwhile = prediction >= 0.5;
@@ -89,16 +91,21 @@ public class NeuralNetwork implements INeuralNetwork {
             if (predictedIsWorthwhile == actualIsWorthwhile) {
                 correctPredictions++;
             }
+
+            // transform boolean to double
+            double actualValue = actualIsWorthwhile ? 1.0 : 0.0;
+
+            // Binary Cross-Entropy Loss calculation
+            double loss = -actualValue * Math.log(prediction) - (1 - actualValue) * Math.log(1 - prediction);
+            totalLoss += loss;
         }
 
-        return (double) correctPredictions / testData.size();
-    }
+        double accuracy = (correctPredictions / (double) testData.size()) * 100;
+        double averageLoss = totalLoss / testData.size();
 
-    private double calculateError(double[] nextLayerWeights, double[] layerOutputs, int currentIndex, double target) {
-        double sum = 0.0;
-        for (int i = 0; i < nextLayerWeights.length; i++) {
-            sum += nextLayerWeights[i] * layerOutputs[currentIndex + i + 1];
-        }
-        return sum * (layerOutputs[currentIndex] * (1 - layerOutputs[currentIndex])) * (target - layerOutputs[currentIndex]);
+        System.out.println("Network Accuracy: " + accuracy + "%");
+        System.out.println("Binary cross entropy (loss) : " + averageLoss);
+
+        return this;
     }
 }
