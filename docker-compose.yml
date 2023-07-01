@@ -1,0 +1,8 @@
+version: '3.8'
+services:
+  app:
+    image: gradle:8.1-jdk17
+    volumes:
+      - ./:/app
+    working_dir: /app
+    command: gradle run --args='10000 1000 true'

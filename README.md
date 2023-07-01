@@ -17,12 +17,23 @@ A TrainDataGenerator generates a random dataset of train and test data with a gi
 
 
 This command will generate 10000 train and 1000 test data and train the network with it. Paramter true means that the generated data is equaly distributed.
-```terminal 
+```bash 
     ./gradlew run --args='10000 1000 true'
 ``` 
 
+### Usage as docker container
+    
+```bash
+    docker compose up
+```
+
 ## Run jUnit Tests
 
-```terminal 
+```bash 
     ./gradlew test
 ```
+
+
+# Technical Details
+
+* Java 17
