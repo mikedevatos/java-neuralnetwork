@@ -12,9 +12,9 @@ It is a simple feed-forward network with backpropagation. As a activation functi
  ![Neural Network](https://upload.wikimedia.org/wikipedia/commons/9/99/Neural_network_example.svg)
 
 
-## Usecase
+## Use-Case
 
-A TrainDataGenerator generates a random dataset of train and test data with a given size. I use a simple RealEstate class here as a example. The network should predict if a house is expensive or not. The network is trained with the price and possible rent of a house. The network should predict if a house is expensive or not.
+A TrainDataGenerator generates a random dataset of train and test data with a given size. I use a simple RealEstate class here as a example. The network should predict if a house is expensive or not. The network is trained with the price and possible rent of a house. 
 
 ## Usage
 This command will generate 10000 train and 1000 test data and train the network with it. Paramter true means that the generated data is equaly distributed.
@@ -22,9 +22,18 @@ This command will generate 10000 train and 1000 test data and train the network 
     ./gradlew run --args='10000 1000 true'
 ``` 
 
+### Output
+    ========================= Data Statistic ==================
+    Amount of data 10000
+    True positiv: 5065
+    True negativ: 4935
+    ===========================================================
+    Network Accuracy: 100.0%
+    Binary cross entropy (loss) : 0.02577636346411718
+
 ## Configuration of the network
 
-There is a Configuration class where you can configure the network. Paramter you can configure are:
+There is a Configuration class where you can configure the network. Parameter you can configure are:
 
    * inputSize: Size of the input layer (number of features, in my case with RealEstate it is 2 as I use price and rent)
    * hiddenSize: Size of the hidden layer (number of neurons)
