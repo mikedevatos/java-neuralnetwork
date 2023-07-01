@@ -9,13 +9,14 @@ It is a simple feed-forward network with backpropagation. As a activation functi
  * Sigmoid, LeakyRelu, Tanh as activation functions
  * Binary Cross Entropy Loss function
 
+ ![Neural Network](https://upload.wikimedia.org/wikipedia/commons/9/99/Neural_network_example.svg)
+
+
 ## Usecase
 
 A TrainDataGenerator generates a random dataset of train and test data with a given size. I use a simple RealEstate class here as a example. The network should predict if a house is expensive or not. The network is trained with the price and possible rent of a house. The network should predict if a house is expensive or not.
 
 ## Usage
-
-
 This command will generate 10000 train and 1000 test data and train the network with it. Paramter true means that the generated data is equaly distributed.
 ```bash 
     ./gradlew run --args='10000 1000 true'
@@ -29,6 +30,10 @@ There is a Configuration class where you can configure the network. Paramter you
    * hiddenSize: Size of the hidden layer (number of neurons)
    * learningRate: Learning rate of the network
    * activationFunction: Activation function of the network.
+
+```java
+    Configuration configuration = new Configuration(2, 3, 0.1, ActivationFunction.SIGMOID);
+```
 
 
 ### Usage as docker container
