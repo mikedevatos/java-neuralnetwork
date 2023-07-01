@@ -20,12 +20,12 @@ public class NeuralNetwork implements INeuralNetwork {
 
         neurons = new ArrayList<>();
 
-        // Erstelle versteckte Neuronen
+        // create hidden neurons
         for (int i = 0; i < hiddenSize; i++) {
             neurons.add(new Neuron(inputSize, learningRate, configuration.activationFunction));
         }
 
-        // Erstelle Ausgabeneuron
+        // create output neuron
         neurons.add(new Neuron(hiddenSize, learningRate, configuration.activationFunction));
     }
 

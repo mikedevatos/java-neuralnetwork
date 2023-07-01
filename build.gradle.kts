@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    id("application")
 }
 
 group = "de.abramov"
@@ -7,6 +8,10 @@ version = "1.0"
 
 repositories {
     mavenCentral()
+}
+
+application {
+    mainClass.set("de.abramov.Main")
 }
 
 dependencies {
