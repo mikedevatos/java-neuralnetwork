@@ -21,6 +21,16 @@ This command will generate 10000 train and 1000 test data and train the network 
     ./gradlew run --args='10000 1000 true'
 ``` 
 
+## Configuration of the network
+
+There is a Configuration class where you can configure the network. Paramter you can configure are:
+
+   * inputSize: Size of the input layer (number of features, in my case with RealEstate it is 2 as I use price and rent)
+   * hiddenSize: Size of the hidden layer (number of neurons)
+   * learningRate: Learning rate of the network
+   * activationFunction: Activation function of the network.
+
+
 ### Usage as docker container
     
 ```bash
