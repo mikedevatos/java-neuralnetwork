@@ -20,12 +20,7 @@ public class ProbabilityUtils {
     }
 
     public static boolean probabilityEquals(double[] prediction, double[] target, double threshold) {
-        double divergence = jensenShannonDivergence(prediction, target);
-        if (divergence < threshold) {
-            return true;
-        } else {
-            return false;
-        }
+        return jensenShannonDivergence(prediction, target) < threshold;
     }
 
 }

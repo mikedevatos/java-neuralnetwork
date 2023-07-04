@@ -53,7 +53,7 @@ public class Main {
         var realEstate = new RealEstate(150000, 700);
         double[] toPredict = {realEstate.getPrice(), realEstate.getRent()};
         var prediction = neuralNetwork.predict(toPredict);
-        LOGGER.info("Single Prediction of: " + realEstate.toString() + ": Predicted:" + Arrays.toString(prediction));
+        LOGGER.info("Single Prediction of: " + realEstate + ": Predicted:" + Arrays.toString(prediction));
     }
 
     private static void prepareInputsAndTargets(List<RealEstate> trainData, double[][] inputs, double[][] targets) {

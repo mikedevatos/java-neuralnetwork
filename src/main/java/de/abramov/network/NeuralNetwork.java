@@ -22,24 +22,24 @@ public class NeuralNetwork implements INeuralNetwork {
     private final LossFunction lossFunction;
 
     public NeuralNetwork(Configuration configuration) {
-        this.inputSize = configuration.inputSize;
-        this.hiddenSize = configuration.hiddenSize;
-        this.outputSize = configuration.outputSize;
-        this.epochs = configuration.epochs;
-        this.lossFunction = configuration.lossFunction;
-        double learningRate = configuration.learningRate;
+        this.inputSize = configuration.inputSize();
+        this.hiddenSize = configuration.hiddenSize();
+        this.outputSize = configuration.outputSize();
+        this.epochs = configuration.epochs();
+        this.lossFunction = configuration.lossFunction();
+        double learningRate = configuration.learningRate();
 
         hiddenNeurons = new ArrayList<>();
         outputNeurons = new ArrayList<>();
 
         // create hidden neurons
         for (int i = 0; i < hiddenSize; i++) {
-            hiddenNeurons.add(new Neuron(inputSize, learningRate, configuration.activationFunction));
+            hiddenNeurons.add(new Neuron(inputSize, learningRate, configuration.activationFunction()));
         }
 
         // create output neurons
         for (int i = 0; i < outputSize; i++) {
-            outputNeurons.add(new Neuron(hiddenSize, learningRate, configuration.activationFunction));
+            outputNeurons.add(new Neuron(hiddenSize, learningRate, configuration.activationFunction()));
         }
     }
 
@@ -52,7 +52,6 @@ public class NeuralNetwork implements INeuralNetwork {
 
                 // Feedforward
                 double[] hiddenOutputs = IntStream.range(0, hiddenSize).mapToDouble(i -> hiddenNeurons.get(i).calculateOutput(input)).toArray();
-
                 // Backpropagation for hidden neurons
                 this.backpropagate(input, target);
                 // Backpropagation for output neuron
@@ -74,7 +73,6 @@ public class NeuralNetwork implements INeuralNetwork {
         for (int i = 0; i < outputSize; i++) {
             output[i] = outputNeurons.get(i).calculateOutput(hiddenOutputs);
         }
-
         return output;
     }
 
@@ -110,10 +108,5 @@ public class NeuralNetwork implements INeuralNetwork {
         LOGGER.info("Categorical Cross Entropy (loss) : {}", averageLoss);
 
         return this;
-    }
-
-
-    private void probabilityEquals(double[] prediction, double[] target) {
-
     }
 }

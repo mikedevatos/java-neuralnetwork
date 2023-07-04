@@ -18,18 +18,10 @@ public class RealEstate {
         return price;
     }
 
-    public void setPrice(double price) {
-        this.price = price;
-    }
 
     public double getRent() {
         return rent;
     }
-
-    public void setRent(double rent) {
-        this.rent = rent;
-    }
-
 
     @Override
     public String toString() {
