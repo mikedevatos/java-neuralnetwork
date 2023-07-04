@@ -1,6 +1,8 @@
 package de.abramov.network;
 
 import de.abramov.network.configuration.Configuration;
+import de.abramov.network.functions.MultiClassificationLossFunctions;
+import de.abramov.network.math.ProbabilityUtils;
 import de.abramov.network.neuron.Neuron;
 
 import java.util.ArrayList;
@@ -11,21 +13,27 @@ public class NeuralNetwork implements INeuralNetwork {
     private final int inputSize;
     private final int hiddenSize;
     private final List<Neuron> hiddenNeurons;
+    private final List<Neuron> outputNeurons;
+    private final int outputSize;
 
     public NeuralNetwork(Configuration configuration) {
         this.inputSize = configuration.inputSize;
         this.hiddenSize = configuration.hiddenSize;
+        this.outputSize = configuration.outputSize;
         double learningRate = configuration.learningRate;
 
         hiddenNeurons = new ArrayList<>();
+        outputNeurons = new ArrayList<>();
 
         // create hidden neurons
         for (int i = 0; i < hiddenSize; i++) {
             hiddenNeurons.add(new Neuron(inputSize, learningRate, configuration.activationFunction));
         }
 
-        // create output neuron
-        hiddenNeurons.add(new Neuron(hiddenSize, learningRate, configuration.activationFunction));
+        // create output neurons
+        for (int i = 0; i < outputSize; i++) {
+            outputNeurons.add(new Neuron(hiddenSize, learningRate, configuration.activationFunction));
+        }
     }
 
     @Override
@@ -45,22 +53,27 @@ public class NeuralNetwork implements INeuralNetwork {
             this.backpropagate(input, target);
 
             // Backpropagation for output neuron
-            hiddenNeurons.get(hiddenSize).backpropagate(hiddenOutputs, target);
+            outputNeurons.forEach(neuron -> neuron.backpropagate(hiddenOutputs, target));
         }
         return this;
     }
 
 
     @Override
-    public double predict(double[] inputs) {
-
-
+    public double[] predict(double[] inputs) {
         double[] hiddenOutputs = IntStream.range(0, hiddenSize)
                 .parallel()
                 .mapToDouble(i -> hiddenNeurons.get(i).calculateOutput(inputs))
                 .toArray();
 
-        return hiddenNeurons.get(hiddenSize).calculateOutput(hiddenOutputs);
+
+        double[] output = new double[outputSize];
+        for(int i = 0; i < outputSize; i++) {
+            output[i] = outputNeurons.get(i).calculateOutput(hiddenOutputs);
+        }
+
+        return output;
+
     }
 
 
@@ -78,22 +91,16 @@ public class NeuralNetwork implements INeuralNetwork {
         double totalLoss = 0;
 
         for (int i = 0; i < inputs.length; i++) {
-            double prediction = predict(inputs[i]);
-            boolean predictedIsWorthwhile = prediction >= 0.5;
-            boolean actualIsWorthwhile = targets[i][0] == 1.0d;
+            double[] prediction = predict(inputs[i]);
 
-            if (predictedIsWorthwhile == actualIsWorthwhile) {
+            boolean isEqual = ProbabilityUtils.probabilityEquals(prediction, targets[i], 0.1d);
+            if (isEqual) {
                 correctPredictions++;
             }
 
-            // transform boolean to double
-            double actualValue = actualIsWorthwhile ? 1.0 : 0.0;
-
-            // Binary Cross-Entropy Loss calculation
-            double loss = -actualValue * Math.log(prediction) - (1 - actualValue) * Math.log(1 - prediction);
+            double loss = MultiClassificationLossFunctions.CATEGORICAL_CROSS_ENTROPY.calculateError(prediction, targets[i]);
             totalLoss += loss;
         }
-        //<-
         double accuracy = (correctPredictions / (double) inputs.length) * 100;
         double averageLoss = totalLoss / inputs.length;
 
@@ -101,5 +108,11 @@ public class NeuralNetwork implements INeuralNetwork {
         System.out.println("Binary cross entropy (loss) : " + averageLoss);
 
         return this;
+    }
+
+
+
+    private void probabilityEquals(double[] prediction, double[] target) {
+
     }
 }

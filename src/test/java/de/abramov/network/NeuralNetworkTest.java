@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class NeuralNetworkTest {
     @Test
     public void testTrainAndPredict() {
-        Configuration config = new Configuration(2, 2, 0.1, new Sigmoid());
+        Configuration config = new Configuration(2, 2, 1, 0.1, new Sigmoid());
         NeuralNetwork network = new NeuralNetwork(config);
 
         List<RealEstate> trainingData = new ArrayList<>();
@@ -36,9 +36,9 @@ public class NeuralNetworkTest {
 
         RealEstate testData = new RealEstate(150000, 700);
         double[] toPredict = {testData.getPrice(), testData.getRent()};
-        double prediction = network.predict(toPredict);
+        double[] prediction = network.predict(toPredict);
 
         // The prediction should be a value between 0 and 1.
-        assertTrue(prediction >= 0 && prediction <= 1);
+        assertTrue(prediction[0] >= 0 && prediction[0] <= 1);
     }
 }

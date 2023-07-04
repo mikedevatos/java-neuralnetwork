@@ -10,7 +10,7 @@ import de.abramov.train.data.RealEstate;
 import java.util.List;
 
 public class Main {
-    private static int trainDataSize = 10000;
+    private static int trainDataSize = 5000;
     private static int testDataSize = 1000;
     private static boolean equalDistribution = true;
 
@@ -30,7 +30,7 @@ public class Main {
         testDataGenerator.printStatistics(trainData);
 
         // Change these paramter if you want to experiment with the network.
-        var neuralNetworkConfiguration = new Configuration(2, 64, 0.1, new Sigmoid());
+        var neuralNetworkConfiguration = new Configuration(2, 64,1, 0.1, new Sigmoid());
 
         double[][] inputs = new double[trainData.size()][2];
         double[][] targets = new double[trainData.size()][1];
