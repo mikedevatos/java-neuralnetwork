@@ -1,12 +1,8 @@
 package de.abramov.network;
 
-import de.abramov.train.data.RealEstate;
-
-import java.util.List;
-
 public interface INeuralNetwork {
-    NeuralNetwork train(List<RealEstate> trainingData);
-    double predict(RealEstate realEstate);
+    NeuralNetwork train(double[][] inputs, double[][] targets);
+    double predict(double[] inputs);
     void backpropagate(double[] inputs, double target);
-    NeuralNetwork evaluate(List<RealEstate> testData);
+    NeuralNetwork evaluate(double[][] inputs, double[][] targets);
 }

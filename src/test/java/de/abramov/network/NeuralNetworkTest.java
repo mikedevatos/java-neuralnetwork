@@ -20,10 +20,23 @@ public class NeuralNetworkTest {
         trainingData.add(new RealEstate(100000, 500));
         trainingData.add(new RealEstate(200000, 1000));
 
-        network.train(trainingData);
+        double[][] inputs = new double[trainingData.size()][2];
+        double[][] targets = new double[trainingData.size()][1];
+
+        for (int i = 0; i < trainingData.size(); i++) {
+            RealEstate realEstate = trainingData.get(i);
+            double[] input = new double[2];
+            input[0] = realEstate.getPrice();
+            input[1] = realEstate.getRent();
+            inputs[i] = input;
+            targets[i] = new double[]{realEstate.getRent()};
+        }
+
+        network.train(inputs, targets);
 
         RealEstate testData = new RealEstate(150000, 700);
-        double prediction = network.predict(testData);
+        double[] toPredict = {testData.getPrice(), testData.getRent()};
+        double prediction = network.predict(toPredict);
 
         // The prediction should be a value between 0 and 1.
         assertTrue(prediction >= 0 && prediction <= 1);

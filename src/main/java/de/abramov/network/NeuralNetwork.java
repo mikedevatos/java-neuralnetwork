@@ -2,7 +2,6 @@ package de.abramov.network;
 
 import de.abramov.network.configuration.Configuration;
 import de.abramov.network.neuron.Neuron;
-import de.abramov.train.data.RealEstate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,21 +29,20 @@ public class NeuralNetwork implements INeuralNetwork {
     }
 
     @Override
-    public NeuralNetwork train(List<RealEstate> trainingData) {
-        for (RealEstate realEstate : trainingData) {
-            double[] inputs = new double[inputSize];
-            inputs[0] = realEstate.getPrice();
-            inputs[1] = realEstate.getRent();
-            double target = realEstate.isWorthwhile() ? 1.0 : 0.0;
+    public NeuralNetwork train(double[][] inputs, double[][] targets) {
+        for (int j = 0; j < inputs.length; j++) {
+            double[] input = inputs[j];
+
+            double target = targets[j][0];
 
             // Feedforward
             double[] hiddenOutputs = new double[hiddenSize];
             for (int i = 0; i < hiddenSize; i++) {
-                hiddenOutputs[i] = hiddenNeurons.get(i).calculateOutput(inputs);
+                hiddenOutputs[i] = hiddenNeurons.get(i).calculateOutput(input);
             }
 
             // Backpropagation for hidden neurons
-            this.backpropagate(inputs, target);
+            this.backpropagate(input, target);
 
             // Backpropagation for output neuron
             hiddenNeurons.get(hiddenSize).backpropagate(hiddenOutputs, target);
@@ -54,8 +52,8 @@ public class NeuralNetwork implements INeuralNetwork {
 
 
     @Override
-    public double predict(RealEstate realEstate) {
-        double[] inputs = { realEstate.getPrice(), realEstate.getRent() };
+    public double predict(double[] inputs) {
+
 
         double[] hiddenOutputs = IntStream.range(0, hiddenSize)
                 .parallel()
@@ -64,7 +62,6 @@ public class NeuralNetwork implements INeuralNetwork {
 
         return hiddenNeurons.get(hiddenSize).calculateOutput(hiddenOutputs);
     }
-
 
 
     @Override
@@ -76,14 +73,14 @@ public class NeuralNetwork implements INeuralNetwork {
     }
 
     @Override
-    public NeuralNetwork evaluate(List<RealEstate> testData) {
+    public NeuralNetwork evaluate(double[][] inputs, double[][] targets) {
         double correctPredictions = 0;
         double totalLoss = 0;
 
-        for (RealEstate realEstate : testData) {
-            double prediction = predict(realEstate);
+        for (int i = 0; i < inputs.length; i++) {
+            double prediction = predict(inputs[i]);
             boolean predictedIsWorthwhile = prediction >= 0.5;
-            boolean actualIsWorthwhile = realEstate.isWorthwhile();
+            boolean actualIsWorthwhile = targets[i][0] == 1.0d;
 
             if (predictedIsWorthwhile == actualIsWorthwhile) {
                 correctPredictions++;
@@ -96,9 +93,9 @@ public class NeuralNetwork implements INeuralNetwork {
             double loss = -actualValue * Math.log(prediction) - (1 - actualValue) * Math.log(1 - prediction);
             totalLoss += loss;
         }
-
-        double accuracy = (correctPredictions / (double) testData.size()) * 100;
-        double averageLoss = totalLoss / testData.size();
+        //<-
+        double accuracy = (correctPredictions / (double) inputs.length) * 100;
+        double averageLoss = totalLoss / inputs.length;
 
         System.out.println("Network Accuracy: " + accuracy + "%");
         System.out.println("Binary cross entropy (loss) : " + averageLoss);
