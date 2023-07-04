@@ -3,6 +3,7 @@ package de.abramov;
 import de.abramov.network.INeuralNetwork;
 import de.abramov.network.NeuralNetwork;
 import de.abramov.network.configuration.Configuration;
+import de.abramov.network.functions.LossFunction;
 import de.abramov.network.functions.Sigmoid;
 import de.abramov.train.TrainDataGenerator;
 import de.abramov.train.data.RealEstate;
@@ -10,8 +11,8 @@ import de.abramov.train.data.RealEstate;
 import java.util.List;
 
 public class Main {
-    private static int trainDataSize = 5000;
-    private static int testDataSize = 1000;
+    private static int trainDataSize = 200;
+    private static int testDataSize = 50;
     private static boolean equalDistribution = true;
 
     public static void main(String[] args) {
@@ -30,12 +31,13 @@ public class Main {
         testDataGenerator.printStatistics(trainData);
 
         // Change these paramter if you want to experiment with the network.
-        var neuralNetworkConfiguration = new Configuration(2, 64,1, 0.1, new Sigmoid());
+        var neuralNetworkConfiguration = new Configuration(2, 64,1, 0.1, 50,   new Sigmoid(), LossFunction.CATEGORICAL_CROSS_ENTROPY);
 
         double[][] inputs = new double[trainData.size()][2];
         double[][] targets = new double[trainData.size()][1];
         double[][] testInputs = new double[testData.size()][2];
         double[][] testTargets = new double[testData.size()][1];
+
         prepareInputsAndTargets(trainData, inputs, targets);
         prepareInputsAndTargets(testData, testInputs, testTargets);
 

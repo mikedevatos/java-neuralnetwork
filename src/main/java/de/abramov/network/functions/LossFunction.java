@@ -1,6 +1,6 @@
 package de.abramov.network.functions;
 
-public enum MultiClassificationLossFunctions {
+public enum LossFunction {
 
     CATEGORICAL_CROSS_ENTROPY {
         @Override

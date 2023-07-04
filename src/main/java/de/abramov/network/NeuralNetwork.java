@@ -1,7 +1,7 @@
 package de.abramov.network;
 
 import de.abramov.network.configuration.Configuration;
-import de.abramov.network.functions.MultiClassificationLossFunctions;
+import de.abramov.network.functions.LossFunction;
 import de.abramov.network.math.ProbabilityUtils;
 import de.abramov.network.neuron.Neuron;
 
@@ -15,11 +15,15 @@ public class NeuralNetwork implements INeuralNetwork {
     private final List<Neuron> hiddenNeurons;
     private final List<Neuron> outputNeurons;
     private final int outputSize;
+    private final int epochs;
+    private final LossFunction lossFunction;
 
     public NeuralNetwork(Configuration configuration) {
         this.inputSize = configuration.inputSize;
         this.hiddenSize = configuration.hiddenSize;
         this.outputSize = configuration.outputSize;
+        this.epochs = configuration.epochs;
+        this.lossFunction = configuration.lossFunction;
         double learningRate = configuration.learningRate;
 
         hiddenNeurons = new ArrayList<>();
@@ -38,22 +42,19 @@ public class NeuralNetwork implements INeuralNetwork {
 
     @Override
     public NeuralNetwork train(double[][] inputs, double[][] targets) {
-        for (int j = 0; j < inputs.length; j++) {
-            double[] input = inputs[j];
+        for (int epoch = 0; epoch < epochs; epoch++) {
+            for (int j = 0; j < inputs.length; j++) {
+                double[] input = inputs[j];
+                double target = targets[j][0];
 
-            double target = targets[j][0];
+                // Feedforward
+                double[] hiddenOutputs = IntStream.range(0, hiddenSize).mapToDouble(i -> hiddenNeurons.get(i).calculateOutput(input)).toArray();
 
-            // Feedforward
-            double[] hiddenOutputs = new double[hiddenSize];
-            for (int i = 0; i < hiddenSize; i++) {
-                hiddenOutputs[i] = hiddenNeurons.get(i).calculateOutput(input);
+                // Backpropagation for hidden neurons
+                this.backpropagate(input, target);
+                // Backpropagation for output neuron
+                this.outputNeurons.forEach(neuron -> neuron.backpropagate(hiddenOutputs, target));
             }
-
-            // Backpropagation for hidden neurons
-            this.backpropagate(input, target);
-
-            // Backpropagation for output neuron
-            outputNeurons.forEach(neuron -> neuron.backpropagate(hiddenOutputs, target));
         }
         return this;
     }
@@ -66,14 +67,12 @@ public class NeuralNetwork implements INeuralNetwork {
                 .mapToDouble(i -> hiddenNeurons.get(i).calculateOutput(inputs))
                 .toArray();
 
-
         double[] output = new double[outputSize];
-        for(int i = 0; i < outputSize; i++) {
+        for (int i = 0; i < outputSize; i++) {
             output[i] = outputNeurons.get(i).calculateOutput(hiddenOutputs);
         }
 
         return output;
-
     }
 
 
@@ -98,7 +97,7 @@ public class NeuralNetwork implements INeuralNetwork {
                 correctPredictions++;
             }
 
-            double loss = MultiClassificationLossFunctions.CATEGORICAL_CROSS_ENTROPY.calculateError(prediction, targets[i]);
+            double loss = LossFunction.CATEGORICAL_CROSS_ENTROPY.calculateError(prediction, targets[i]);
             totalLoss += loss;
         }
         double accuracy = (correctPredictions / (double) inputs.length) * 100;
@@ -109,7 +108,6 @@ public class NeuralNetwork implements INeuralNetwork {
 
         return this;
     }
-
 
 
     private void probabilityEquals(double[] prediction, double[] target) {
