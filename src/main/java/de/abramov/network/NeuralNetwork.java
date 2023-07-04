@@ -4,12 +4,15 @@ import de.abramov.network.configuration.Configuration;
 import de.abramov.network.functions.LossFunction;
 import de.abramov.network.math.ProbabilityUtils;
 import de.abramov.network.neuron.Neuron;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
 public class NeuralNetwork implements INeuralNetwork {
+    private static final Logger LOGGER = LoggerFactory.getLogger(NeuralNetwork.class);
     private final int inputSize;
     private final int hiddenSize;
     private final List<Neuron> hiddenNeurons;
@@ -103,8 +106,8 @@ public class NeuralNetwork implements INeuralNetwork {
         double accuracy = (correctPredictions / (double) inputs.length) * 100;
         double averageLoss = totalLoss / inputs.length;
 
-        System.out.println("Network Accuracy: " + accuracy + "%");
-        System.out.println("Binary cross entropy (loss) : " + averageLoss);
+        LOGGER.info("Network Accuracy: {}%", accuracy);
+        LOGGER.info("Categorical Cross Entropy (loss) : {}", averageLoss);
 
         return this;
     }

@@ -7,17 +7,21 @@ import de.abramov.network.functions.ActivationFunction;
 import de.abramov.network.functions.LossFunction;
 import de.abramov.train.TrainDataGenerator;
 import de.abramov.train.data.RealEstate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class Main {
     private static int trainDataSize = 200;
     private static int testDataSize = 50;
     private static boolean equalDistribution = true;
+    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {
         if (args.length != 0 && args.length !=3) {
-            System.out.println("Wrong number of arguments. Please provide the following arguments: trainDataSize, testDataSize, equalDistribution");
+            LOGGER.error("Wrong number of arguments. Please provide the following arguments: trainDataSize, testDataSize, equalDistribution");
             return;
         }
         if (args.length == 3) {
@@ -49,7 +53,7 @@ public class Main {
         var realEstate = new RealEstate(150000, 700);
         double[] toPredict = {realEstate.getPrice(), realEstate.getRent()};
         var prediction = neuralNetwork.predict(toPredict);
-        System.out.println("Single Prediction of: " + realEstate.toString() + ": " + prediction);
+        LOGGER.info("Single Prediction of: " + realEstate.toString() + ": Predicted:" + Arrays.toString(prediction));
     }
 
     private static void prepareInputsAndTargets(List<RealEstate> trainData, double[][] inputs, double[][] targets) {

@@ -1,6 +1,8 @@
 package de.abramov.train;
 
 import de.abramov.train.data.RealEstate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,6 +10,7 @@ import java.util.Random;
 import java.util.stream.IntStream;
 
 public class TrainDataGenerator {
+    private static final Logger logger = LoggerFactory.getLogger(TrainDataGenerator.class);
     private final Random rand = new Random();
     public List<RealEstate> getTrainData(int trainDataSize, boolean equalDistribution) {
         List<RealEstate> realEstateList = new ArrayList<>();
@@ -36,10 +39,10 @@ public class TrainDataGenerator {
     }
     public void printStatistics(List<RealEstate> realEstateList) {
         long count = realEstateList.stream().filter(RealEstate::isWorthwhile).count();
-        System.out.println("========================= Data Statistic ==================");
-        System.out.println("Amount of data " + realEstateList.size());
-        System.out.println("True positiv: " + count);
-        System.out.println("True negativ: " + (realEstateList.size() - count));
-        System.out.println("===========================================================");
+        logger.info("========================= Data Statistic ==================");
+        logger.info("Amount of data " + realEstateList.size());
+        logger.info("True positiv: " + count);
+        logger.info("True negativ: " + (realEstateList.size() - count));
+        logger.info("===========================================================");
     }
 }

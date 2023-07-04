@@ -6,8 +6,8 @@ It is a simple feed-forward network with backpropagation. As a activation functi
 
  * Single Hidden Neuron layer (number of neurons are configurable)
  * Backpropagation, Feed Forward
- * Sigmoid, LeakyRelu, Tanh as activation functions
- * Binary Cross Entropy Loss function
+ * Sigmoid, LeakyRelu, Tanh as activation functions. Sigmoid is used in the example.
+ * Categorical Cross Entropy Loss function
 
  ![Neural Network](https://upload.wikimedia.org/wikipedia/commons/9/99/Neural_network_example.svg)
 
@@ -40,9 +40,10 @@ There is a Configuration class where you can configure the network. Parameter yo
    * learningRate: Learning rate of the network
    * activationFunction: Activation function of the network.
 
-```java
-    Configuration configuration = new Configuration(2, 3, 0.1, ActivationFunction.SIGMOID);
+```example
+     new Configuration(2, 64,1, 0.1, 50,   ActivationFunction.SIGMOID, LossFunction.CATEGORICAL_CROSS_ENTROPY);
 ```
+This will create a network with 2 input neurons, 64 hidden neurons, 1 output neuron, learning rate 0.1, 50 epochs, sigmoid as activation function and categorical cross entropy as loss function.
 
 
 ### Usage as docker container
