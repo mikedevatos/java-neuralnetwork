@@ -11,22 +11,22 @@ import java.util.stream.IntStream;
 public class NeuralNetwork implements INeuralNetwork {
     private final int inputSize;
     private final int hiddenSize;
-    private final List<Neuron> neurons;
+    private final List<Neuron> hiddenNeurons;
 
     public NeuralNetwork(Configuration configuration) {
         this.inputSize = configuration.inputSize;
         this.hiddenSize = configuration.hiddenSize;
         double learningRate = configuration.learningRate;
 
-        neurons = new ArrayList<>();
+        hiddenNeurons = new ArrayList<>();
 
         // create hidden neurons
         for (int i = 0; i < hiddenSize; i++) {
-            neurons.add(new Neuron(inputSize, learningRate, configuration.activationFunction));
+            hiddenNeurons.add(new Neuron(inputSize, learningRate, configuration.activationFunction));
         }
 
         // create output neuron
-        neurons.add(new Neuron(hiddenSize, learningRate, configuration.activationFunction));
+        hiddenNeurons.add(new Neuron(hiddenSize, learningRate, configuration.activationFunction));
     }
 
     @Override
@@ -40,17 +40,14 @@ public class NeuralNetwork implements INeuralNetwork {
             // Feedforward
             double[] hiddenOutputs = new double[hiddenSize];
             for (int i = 0; i < hiddenSize; i++) {
-                hiddenOutputs[i] = neurons.get(i).feedForward(inputs);
+                hiddenOutputs[i] = hiddenNeurons.get(i).calculateOutput(inputs);
             }
-
-            // Feedforward for output neuron
-            neurons.get(hiddenSize).feedForward(hiddenOutputs);
 
             // Backpropagation for hidden neurons
             this.backpropagate(inputs, target);
 
             // Backpropagation for output neuron
-            neurons.get(hiddenSize).backpropagate(hiddenOutputs, target);
+            hiddenNeurons.get(hiddenSize).backpropagate(hiddenOutputs, target);
         }
         return this;
     }
@@ -62,10 +59,10 @@ public class NeuralNetwork implements INeuralNetwork {
 
         double[] hiddenOutputs = IntStream.range(0, hiddenSize)
                 .parallel()
-                .mapToDouble(i -> neurons.get(i).feedForward(inputs))
+                .mapToDouble(i -> hiddenNeurons.get(i).calculateOutput(inputs))
                 .toArray();
 
-        return neurons.get(hiddenSize).feedForward(hiddenOutputs);
+        return hiddenNeurons.get(hiddenSize).calculateOutput(hiddenOutputs);
     }
 
 
@@ -73,7 +70,7 @@ public class NeuralNetwork implements INeuralNetwork {
     @Override
     public void backpropagate(double[] inputs, double target) {
         for (int i = hiddenSize - 1; i >= 0; i--) {
-            Neuron neuron = neurons.get(i);
+            Neuron neuron = hiddenNeurons.get(i);
             neuron.backpropagate(inputs, target);
         }
     }

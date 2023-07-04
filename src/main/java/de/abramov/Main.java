@@ -8,7 +8,7 @@ import de.abramov.train.TrainDataGenerator;
 import de.abramov.train.data.RealEstate;
 
 public class Main {
-    private static int trainDataSize = 10000;
+    private static int trainDataSize = 1000;
     private static int testDataSize = 1000;
     private static boolean equalDistribution = true;
 

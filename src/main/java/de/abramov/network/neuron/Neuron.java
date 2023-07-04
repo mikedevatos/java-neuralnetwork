@@ -27,7 +27,7 @@ public class Neuron implements INeuron {
     }
 
     @Override
-    public double feedForward(double[] inputs) {
+    public double calculateOutput(double[] inputs) {
         if (inputs.length != weights.length) {
             throw new IllegalArgumentException("The length of the inputs does not match the number of weights");
         }
@@ -43,13 +43,13 @@ public class Neuron implements INeuron {
 
     @Override
     public void backpropagate(double[] inputs, double target) {
-        double output = feedForward(inputs);
-        double error = target - output;
-        double delta = error * activationFunction.calculateDerivative(output);
+            double output = calculateOutput(inputs);
+            double error = target - output;
+            double delta = error * activationFunction.calculateDerivative(output);
 
-        for (int i = 0; i < weights.length; i++) {
-            weights[i] += learningRate * delta * inputs[i];
-        }
-        bias += learningRate * delta;
+            for (int i = 0; i < weights.length; i++) {
+                weights[i] += learningRate * delta * inputs[i];
+            }
+            bias += learningRate * delta;
     }
 }
