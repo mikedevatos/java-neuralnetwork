@@ -3,8 +3,8 @@ package de.abramov;
 import de.abramov.network.INeuralNetwork;
 import de.abramov.network.NeuralNetwork;
 import de.abramov.network.configuration.Configuration;
+import de.abramov.network.functions.ActivationFunction;
 import de.abramov.network.functions.LossFunction;
-import de.abramov.network.functions.Sigmoid;
 import de.abramov.train.TrainDataGenerator;
 import de.abramov.train.data.RealEstate;
 
@@ -31,7 +31,7 @@ public class Main {
         testDataGenerator.printStatistics(trainData);
 
         // Change these paramter if you want to experiment with the network.
-        var neuralNetworkConfiguration = new Configuration(2, 64,1, 0.1, 50,   new Sigmoid(), LossFunction.CATEGORICAL_CROSS_ENTROPY);
+        var neuralNetworkConfiguration = new Configuration(2, 64,1, 0.1, 50,   ActivationFunction.SIGMOID, LossFunction.CATEGORICAL_CROSS_ENTROPY);
 
         double[][] inputs = new double[trainData.size()][2];
         double[][] targets = new double[trainData.size()][1];

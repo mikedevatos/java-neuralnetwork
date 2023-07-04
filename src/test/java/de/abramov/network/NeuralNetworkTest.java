@@ -1,7 +1,8 @@
 package de.abramov.network;
 
 import de.abramov.network.configuration.Configuration;
-import de.abramov.network.functions.Sigmoid;
+import de.abramov.network.functions.ActivationFunction;
+import de.abramov.network.functions.LossFunction;
 import de.abramov.train.data.RealEstate;
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class NeuralNetworkTest {
     @Test
     public void testTrainAndPredict() {
-        Configuration config = new Configuration(2, 2, 1, 0.1, new Sigmoid());
+        Configuration config = new Configuration(2, 2, 1, 0.1, 20,  ActivationFunction.SIGMOID, LossFunction.CATEGORICAL_CROSS_ENTROPY);
         NeuralNetwork network = new NeuralNetwork(config);
 
         List<RealEstate> trainingData = new ArrayList<>();
