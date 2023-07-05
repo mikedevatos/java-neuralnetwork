@@ -1,6 +1,6 @@
-package de.abramov.train;
+package de.abramov.data;
 
-import de.abramov.train.data.RealEstate;
+import de.abramov.data.dto.RealEstate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

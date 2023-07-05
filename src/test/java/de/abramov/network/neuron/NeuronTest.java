@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class NeuronTest {
     @Test
     public void testFeedForward() {
-        Neuron neuron = new Neuron(2, 0.1, ActivationFunction.SIGMOID);
+        Neuron neuron = new Neuron(2,  ActivationFunction.SIGMOID);
         double output = neuron.calculateOutput(new double[]{1, 1});
         assertTrue(output >= 0 && output <= 1);
     }

@@ -2,54 +2,41 @@ package de.abramov.network.neuron;
 
 import de.abramov.network.functions.ActivationFunction;
 
-import java.util.concurrent.ThreadLocalRandom;
-
-public class Neuron implements INeuron {
-    private final static ThreadLocalRandom random = ThreadLocalRandom.current();
-    private final ActivationFunction activationFunction;
-    private final double[] weights;
+public class Neuron {
+    private double[] weights;
     private double bias;
-    private final double learningRate;
+    private final ActivationFunction activationFunction;
 
-    public Neuron(int inputSize, double learningRate, ActivationFunction activationFunction) {
+    public Neuron(int inputSize, ActivationFunction activationFunction) {
         this.weights = new double[inputSize];
-        this.bias = 0.0;
-        this.learningRate = learningRate;
         this.activationFunction = activationFunction;
+        this.bias = Math.random() * 2 - 1; // initialize bias to a random value between -1 and 1
 
-        initRandomWeightMinusOneToOne(inputSize);
-    }
-
-    private void initRandomWeightMinusOneToOne(int inputSize) {
+        // Initialize weights to random values between -1 and 1
         for (int i = 0; i < inputSize; i++) {
-            weights[i] = random.nextDouble() * 2 - 1;
+            this.weights[i] = Math.random() * 2 - 1;
         }
     }
 
-    @Override
-    public double calculateOutput(double[] inputs) {
-        if (inputs.length != weights.length) {
-            throw new IllegalArgumentException("The length of the inputs does not match the number of weights");
+    public double calculateOutput(double[] input) {
+        double output = bias;
+        for (int i = 0; i < input.length; i++) {
+            output += input[i] * weights[i];
         }
+        return activationFunction.calculateActivation(output);
+    }
 
-        double sum = 0.0;
+    public void adjustWeights(double[] input, double error, double learningRate) {
         for (int i = 0; i < weights.length; i++) {
-            sum += inputs[i] * weights[i];
+            weights[i] += learningRate * input[i] * error;
         }
-        sum += bias;
-
-        return activationFunction.calculateActivation(sum);
     }
 
-    @Override
-    public void backpropagate(double[] inputs, double target) {
-            double output = calculateOutput(inputs);
-            double error = target - output;
-            double delta = error * activationFunction.calculateDerivative(output);
+    public void adjustBias(double error, double learningRate) {
+        bias += learningRate * error;
+    }
 
-            for (int i = 0; i < weights.length; i++) {
-                weights[i] += learningRate * delta * inputs[i];
-            }
-            bias += learningRate * delta;
+    public double getWeight(int index) {
+        return weights[index];
     }
 }

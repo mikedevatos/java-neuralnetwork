@@ -1,8 +1,8 @@
-package de.abramov.train;
+package de.abramov.data.provider;
 
 import de.abramov.data.CSVDataReader;
 import de.abramov.data.DataReader;
-import de.abramov.train.data.Iris;
+import de.abramov.data.dto.Iris;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

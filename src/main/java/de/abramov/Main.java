@@ -1,59 +1,60 @@
 package de.abramov;
 
-import de.abramov.network.INeuralNetwork;
+import de.abramov.data.dto.RealEstate;
+import de.abramov.data.provider.DataProvider;
+import de.abramov.data.provider.IDataProvider;
+import de.abramov.data.provider.IrisProvider;
+import de.abramov.data.provider.RealEstateProvider;
 import de.abramov.network.NeuralNetwork;
 import de.abramov.network.configuration.Configuration;
 import de.abramov.network.functions.ActivationFunction;
 import de.abramov.network.functions.LossFunction;
-import de.abramov.train.TrainDataGenerator;
-import de.abramov.train.data.RealEstate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class Main {
-    private static int trainDataSize = 200;
-    private static int testDataSize = 50;
+
     private static boolean equalDistribution = true;
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
+    private static final boolean SHUFFLE = true;
+    private final static boolean NORMALIZE = true;
+
     public static void main(String[] args) {
-        if (args.length != 0 && args.length !=3) {
-            LOGGER.error("Wrong number of arguments. Please provide the following arguments: trainDataSize, testDataSize, equalDistribution");
-            return;
+        Main main = new Main();
+        main.run();
+    }
+
+    private void run() {
+        var datasetProvider = getDataProvider(DataProvider.IRIS);
+        datasetProvider.printStatistics();
+
+        var inputSize = datasetProvider.getFeatures()[0].length;
+        var outputSize = datasetProvider.getLabels()[0].length;
+
+        var neuralNetworkConfiguration = new Configuration(inputSize, 128, outputSize, 0.01, 6, ActivationFunction.LEAKY_RELU, ActivationFunction.SOFTMAX, LossFunction.CATEGORICAL_CROSS_ENTROPY);
+
+        double[][] inputs = datasetProvider.getFeatures();
+        double[][] targets = datasetProvider.getLabels();
+        double[][] testInputs = datasetProvider.getFeaturesTest();
+        double[][] testTargets = datasetProvider.getLabelsTest();
+
+        NeuralNetwork neuralNetwork = new NeuralNetwork(inputs, targets, testInputs, testTargets, neuralNetworkConfiguration);
+        neuralNetwork.train();
+    }
+
+    private IDataProvider<?> getDataProvider(DataProvider dataProvider) {
+        switch (dataProvider) {
+            case IRIS:
+                return new IrisProvider(NORMALIZE, SHUFFLE, 0.8);
+            case REAL_ESTATE:
+                int trainDataSize = 200;
+                return new RealEstateProvider(trainDataSize, equalDistribution, 0.6);
+            default:
+                throw new IllegalArgumentException("Unknown data provider: " + dataProvider);
         }
-        if (args.length == 3) {
-            applyArguments(args);
-        }
-
-        var testDataGenerator = new TrainDataGenerator();
-        var trainData = testDataGenerator.getTrainData(trainDataSize, equalDistribution);
-        var testData = testDataGenerator.getTrainData(testDataSize, equalDistribution);
-
-        testDataGenerator.printStatistics(trainData);
-
-        // Change these paramter if you want to experiment with the network.
-        var neuralNetworkConfiguration = new Configuration(2, 64,1, 0.1, 50,   ActivationFunction.SIGMOID, LossFunction.CATEGORICAL_CROSS_ENTROPY);
-
-        double[][] inputs = new double[trainData.size()][2];
-        double[][] targets = new double[trainData.size()][1];
-        double[][] testInputs = new double[testData.size()][2];
-        double[][] testTargets = new double[testData.size()][1];
-
-        prepareInputsAndTargets(trainData, inputs, targets);
-        prepareInputsAndTargets(testData, testInputs, testTargets);
-
-        INeuralNetwork neuralNetwork = new NeuralNetwork(neuralNetworkConfiguration)
-                .train(inputs, targets)
-                .evaluate(testInputs, testTargets);
-
-        //Single Prediction
-        var realEstate = new RealEstate(150000, 700);
-        double[] toPredict = {realEstate.getPrice(), realEstate.getRent()};
-        var prediction = neuralNetwork.predict(toPredict);
-        LOGGER.info("Single Prediction of: " + realEstate + ": Predicted:" + Arrays.toString(prediction));
     }
 
     private static void prepareInputsAndTargets(List<RealEstate> trainData, double[][] inputs, double[][] targets) {
@@ -66,12 +67,6 @@ public class Main {
 
             targets[i][0] = (realEstate.isWorthwhile() ? 1.0d : 0.0d);
         }
-    }
-
-    private static void applyArguments(String[] args) {
-        trainDataSize = Integer.parseInt(args[0]);
-        testDataSize = Integer.parseInt(args[1]);
-        equalDistribution = Boolean.parseBoolean(args[2]);
     }
 
 }

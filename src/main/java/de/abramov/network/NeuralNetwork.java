@@ -1,112 +1,133 @@
 package de.abramov.network;
 
 import de.abramov.network.configuration.Configuration;
-import de.abramov.network.functions.LossFunction;
-import de.abramov.network.math.ProbabilityUtils;
+import de.abramov.network.functions.ActivationFunction;
 import de.abramov.network.neuron.Neuron;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.IntStream;
+public class NeuralNetwork {
+    private static final Logger LOG = LoggerFactory.getLogger(NeuralNetwork.class);
+    private final double[][] inputs;
+    private final double[][] targets;
+    private final Configuration config;
+    private final ActivationFunction hiddenLayerActivationFunction;
+    private final ActivationFunction outputLayerActivationFunction;
+    private final double[][] testInputs;
+    private final double[][] testTargets;
 
-public class NeuralNetwork implements INeuralNetwork {
-    private static final Logger LOGGER = LoggerFactory.getLogger(NeuralNetwork.class);
-    private final int inputSize;
-    private final int hiddenSize;
-    private final List<Neuron> hiddenNeurons;
-    private final List<Neuron> outputNeurons;
-    private final int outputSize;
-    private final int epochs;
-    private final LossFunction lossFunction;
+    private final Neuron[] hiddenLayer;
+    private final Neuron[] outputLayer;
 
-    public NeuralNetwork(Configuration configuration) {
-        this.inputSize = configuration.inputSize();
-        this.hiddenSize = configuration.hiddenSize();
-        this.outputSize = configuration.outputSize();
-        this.epochs = configuration.epochs();
-        this.lossFunction = configuration.lossFunction();
-        double learningRate = configuration.learningRate();
+    /**
+     *
+     * @param inputs - This are the features of the dataset
+     * @param targets - This are the labels of the dataset
+     * @param testInputs - This are the features of the test dataset
+     * @param testTargets - This are the labels of the test dataset
+     * @param config - This is the configuration of the neural network
+     */
+    public NeuralNetwork(double[][] inputs, double[][] targets, double[][] testInputs, double[][] testTargets, Configuration config) {
+        this.inputs = inputs;
+        this.targets = targets;
+        this.testInputs = testInputs;
+        this.testTargets = testTargets;
+        this.config = config;
 
-        hiddenNeurons = new ArrayList<>();
-        outputNeurons = new ArrayList<>();
+        hiddenLayerActivationFunction = config.hiddenLayerActivationFunction();
+        outputLayerActivationFunction = config.outputLayerActivationFunction();
 
-        // create hidden neurons
-        for (int i = 0; i < hiddenSize; i++) {
-            hiddenNeurons.add(new Neuron(inputSize, learningRate, configuration.activationFunction()));
+        hiddenLayer = new Neuron[config.hiddenSize()];
+        outputLayer = new Neuron[config.outputSize()];
+
+        for (int i = 0; i < config.hiddenSize(); i++) {
+            hiddenLayer[i] = new Neuron(config.inputSize(), hiddenLayerActivationFunction);
         }
 
-        // create output neurons
-        for (int i = 0; i < outputSize; i++) {
-            outputNeurons.add(new Neuron(hiddenSize, learningRate, configuration.activationFunction()));
-        }
-    }
-
-    @Override
-    public NeuralNetwork train(double[][] inputs, double[][] targets) {
-        for (int epoch = 0; epoch < epochs; epoch++) {
-            for (int j = 0; j < inputs.length; j++) {
-                double[] input = inputs[j];
-                double target = targets[j][0];
-
-                // Feedforward
-                double[] hiddenOutputs = IntStream.range(0, hiddenSize).mapToDouble(i -> hiddenNeurons.get(i).calculateOutput(input)).toArray();
-                // Backpropagation for hidden neurons
-                this.backpropagate(input, target);
-                // Backpropagation for output neuron
-                this.outputNeurons.forEach(neuron -> neuron.backpropagate(hiddenOutputs, target));
-            }
-        }
-        return this;
-    }
-
-
-    @Override
-    public double[] predict(double[] inputs) {
-        double[] hiddenOutputs = IntStream.range(0, hiddenSize)
-                .parallel()
-                .mapToDouble(i -> hiddenNeurons.get(i).calculateOutput(inputs))
-                .toArray();
-
-        double[] output = new double[outputSize];
-        for (int i = 0; i < outputSize; i++) {
-            output[i] = outputNeurons.get(i).calculateOutput(hiddenOutputs);
-        }
-        return output;
-    }
-
-
-    @Override
-    public void backpropagate(double[] inputs, double target) {
-        for (int i = hiddenSize - 1; i >= 0; i--) {
-            Neuron neuron = hiddenNeurons.get(i);
-            neuron.backpropagate(inputs, target);
+        for (int i = 0; i < config.outputSize(); i++) {
+            outputLayer[i] = new Neuron(config.hiddenSize(), outputLayerActivationFunction);
         }
     }
 
-    @Override
-    public NeuralNetwork evaluate(double[][] inputs, double[][] targets) {
-        double correctPredictions = 0;
-        double totalLoss = 0;
+    private double[] feedforward(double[] input) {
+        double[] hiddenOutputs = new double[config.hiddenSize()];
+        double[] output = new double[config.outputSize()];
 
-        for (int i = 0; i < inputs.length; i++) {
-            double[] prediction = predict(inputs[i]);
+        for (int i = 0; i < config.hiddenSize(); i++) {
+            hiddenOutputs[i] = hiddenLayer[i].calculateOutput(input);
+        }
 
-            boolean isEqual = ProbabilityUtils.probabilityEquals(prediction, targets[i], 0.1d);
-            if (isEqual) {
-                correctPredictions++;
+        for (int i = 0; i < config.outputSize(); i++) {
+            output[i] = outputLayer[i].calculateOutput(hiddenOutputs);
+        }
+
+        return outputLayerActivationFunction.calculateActivation(output);
+    }
+
+    public void train() {
+        for (int epoch = 0; epoch < config.epochs(); epoch++) {
+            for (int i = 0; i < inputs.length; i++) {
+                double[] output = feedforward(inputs[i]);
+
+                double[] output_error_signal = new double[config.outputSize()];
+                double[] hidden_error_signal = new double[config.hiddenSize()];
+
+                for (int j = 0; j < config.outputSize(); j++)
+                    output_error_signal[j] = targets[i][j] - output[j];
+
+                for (int j = 0; j < config.hiddenSize(); j++)
+                    for (int k = 0; k < config.outputSize(); k++)
+                        hidden_error_signal[j] += output_error_signal[k] * outputLayer[k].getWeight(j);
+
+                updateWeights(i, output_error_signal, hidden_error_signal); //Aufruf der neuen Methode
             }
 
-            double loss = LossFunction.CATEGORICAL_CROSS_ENTROPY.calculateError(prediction, targets[i]);
-            totalLoss += loss;
+            if (epoch % 2 == 0) {
+                double accuracy = evaluate(testInputs, testTargets);
+                LOG.info("Epoch: {} Accuracy: {}%", epoch, String.format("%.2f", accuracy * 100));
+            }
         }
-        double accuracy = (correctPredictions / (double) inputs.length) * 100;
-        double averageLoss = totalLoss / inputs.length;
+    }
 
-        LOGGER.info("Network Accuracy: {}%", accuracy);
-        LOGGER.info("Categorical Cross Entropy (loss) : {}", averageLoss);
+    private void updateWeights(int i, double[] output_error_signal, double[] hidden_error_signal) {
+        for (int j = 0; j < config.hiddenSize(); j++) {
+            hiddenLayer[j].adjustBias(hidden_error_signal[j], config.learningRate());
+            hiddenLayer[j].adjustWeights(inputs[i], hidden_error_signal[j], config.learningRate());
+        }
 
-        return this;
+        double[] hiddenOutputs = new double[config.hiddenSize()];
+        for (int k = 0; k < config.hiddenSize(); k++) {
+            hiddenOutputs[k] = hiddenLayer[k].calculateOutput(inputs[i]);
+        }
+        for (int j = 0; j < config.outputSize(); j++) {
+            outputLayer[j].adjustBias(output_error_signal[j], config.learningRate());
+            outputLayer[j].adjustWeights(hiddenOutputs, output_error_signal[j], config.learningRate());
+        }
+    }
+
+    public double evaluate(double[][] testInputs, double[][] testTargets) {
+        int correctCount = 0;
+
+        for (int i = 0; i < testInputs.length; i++) {
+            double[] predicted = predict(testInputs[i]);
+            int predictedIndex = 0;
+            int targetIndex = 0;
+
+            for (int j = 0; j < predicted.length; j++) {
+                if (predicted[j] > predicted[predictedIndex])
+                    predictedIndex = j;
+                if (testTargets[i][j] > testTargets[i][targetIndex])
+                    targetIndex = j;
+            }
+
+            if (predictedIndex == targetIndex)
+                correctCount++;
+        }
+
+        return (double) correctCount / testInputs.length;
+    }
+
+    public double[] predict(double[] input) {
+        return feedforward(input);
     }
 }
