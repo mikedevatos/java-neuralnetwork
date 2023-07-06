@@ -1,4 +1,4 @@
-package de.abramov.train.data;
+package de.abramov.data.dto;
 
 public class RealEstate {
 

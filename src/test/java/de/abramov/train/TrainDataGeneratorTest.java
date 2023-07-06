@@ -1,6 +1,7 @@
 package de.abramov.train;
 
-import de.abramov.train.data.RealEstate;
+import de.abramov.data.TrainDataGenerator;
+import de.abramov.data.dto.RealEstate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
