@@ -6,6 +6,9 @@ import de.abramov.network.neuron.Neuron;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class NeuralNetwork {
     private static final Logger LOG = LoggerFactory.getLogger(NeuralNetwork.class);
     private final double[][] inputs;
@@ -16,17 +19,9 @@ public class NeuralNetwork {
     private final double[][] testInputs;
     private final double[][] testTargets;
 
-    private final Neuron[] hiddenLayer;
+    private final List<Neuron[]> hiddenLayers;
     private final Neuron[] outputLayer;
 
-    /**
-     *
-     * @param inputs - This are the features of the dataset
-     * @param targets - This are the labels of the dataset
-     * @param testInputs - This are the features of the test dataset
-     * @param testTargets - This are the labels of the test dataset
-     * @param config - This is the configuration of the neural network
-     */
     public NeuralNetwork(double[][] inputs, double[][] targets, double[][] testInputs, double[][] testTargets, Configuration config) {
         this.inputs = inputs;
         this.targets = targets;
@@ -37,71 +32,110 @@ public class NeuralNetwork {
         hiddenLayerActivationFunction = config.hiddenLayerActivationFunction();
         outputLayerActivationFunction = config.outputLayerActivationFunction();
 
-        hiddenLayer = new Neuron[config.hiddenSize()];
-        outputLayer = new Neuron[config.outputSize()];
+        hiddenLayers = new ArrayList<>();
 
-        for (int i = 0; i < config.hiddenSize(); i++) {
-            hiddenLayer[i] = new Neuron(config.inputSize(), hiddenLayerActivationFunction);
+        int inputSizeForCurrentLayer = config.inputSize();
+        for (int layerSize : config.hiddenLayersSize()) {
+            Neuron[] hiddenLayer = new Neuron[layerSize];
+            for (int i = 0; i < layerSize; i++) {
+                hiddenLayer[i] = new Neuron(inputSizeForCurrentLayer, hiddenLayerActivationFunction);
+            }
+            hiddenLayers.add(hiddenLayer);
+            inputSizeForCurrentLayer = layerSize;
         }
 
+        outputLayer = new Neuron[config.outputSize()];
         for (int i = 0; i < config.outputSize(); i++) {
-            outputLayer[i] = new Neuron(config.hiddenSize(), outputLayerActivationFunction);
+            outputLayer[i] = new Neuron(inputSizeForCurrentLayer, outputLayerActivationFunction);
         }
     }
 
     private double[] feedforward(double[] input) {
-        double[] hiddenOutputs = new double[config.hiddenSize()];
-        double[] output = new double[config.outputSize()];
+        double[] currentInput = input;
 
-        for (int i = 0; i < config.hiddenSize(); i++) {
-            hiddenOutputs[i] = hiddenLayer[i].calculateOutput(input);
+        // Pass input through all hidden layers
+        for (Neuron[] layer : hiddenLayers) {
+            double[] hiddenOutputs = new double[layer.length];
+            for (int i = 0; i < layer.length; i++) {
+                hiddenOutputs[i] = layer[i].calculateOutput(currentInput);
+            }
+            currentInput = hiddenOutputs;
         }
 
+        // Pass input through output layer
+        double[] output = new double[config.outputSize()];
         for (int i = 0; i < config.outputSize(); i++) {
-            output[i] = outputLayer[i].calculateOutput(hiddenOutputs);
+            output[i] = outputLayer[i].calculateOutput(currentInput);
         }
 
         return outputLayerActivationFunction.calculateActivation(output);
     }
 
     public void train() {
+        double bestAccuracy = 0;
         for (int epoch = 0; epoch < config.epochs(); epoch++) {
             for (int i = 0; i < inputs.length; i++) {
                 double[] output = feedforward(inputs[i]);
 
+                // Calculate error signals
                 double[] output_error_signal = new double[config.outputSize()];
-                double[] hidden_error_signal = new double[config.hiddenSize()];
-
                 for (int j = 0; j < config.outputSize(); j++)
                     output_error_signal[j] = targets[i][j] - output[j];
 
-                for (int j = 0; j < config.hiddenSize(); j++)
-                    for (int k = 0; k < config.outputSize(); k++)
-                        hidden_error_signal[j] += output_error_signal[k] * outputLayer[k].getWeight(j);
+                List<double[]> hidden_error_signals = new ArrayList<>();
+                for (int j = hiddenLayers.size() - 1; j >= 0; j--) {
+                    double[] hidden_error_signal = new double[hiddenLayers.get(j).length];
+                    for (int k = 0; k < hiddenLayers.get(j).length; k++) {
+                        for (int l = 0; l < output_error_signal.length; l++) {
+                            hidden_error_signal[k] += output_error_signal[l] * (j == hiddenLayers.size() - 1 ? outputLayer[l].getWeight(k) : hiddenLayers.get(j+1)[l].getWeight(k));
+                        }
+                    }
+                    hidden_error_signals.add(0, hidden_error_signal);
+                    output_error_signal = hidden_error_signal;
+                }
 
-                updateWeights(i, output_error_signal, hidden_error_signal); //Aufruf der neuen Methode
+                updateWeights(i, output_error_signal, hidden_error_signals);
             }
 
-            if (epoch % 2 == 0) {
-                double accuracy = evaluate(testInputs, testTargets);
-                LOG.info("Epoch: {} Accuracy: {}%", epoch, String.format("%.2f", accuracy * 100));
+            if (epoch % 10 == 0) {
+                double accuracy = evaluate(testInputs, testTargets)*100;
+                if (accuracy == 100){
+                    LOG.info("Best possible Accuracy: {}%", String.format("%.2f", accuracy));
+                    return;
+                }
+
+                if (accuracy > bestAccuracy ) {
+                    bestAccuracy = accuracy;
+                    LOG.info("Best Accuracy: {}%", String.format("%.2f", bestAccuracy));
+                }
+                // if accuracy 20% lower than best accuracy, stop training
+                if (bestAccuracy - accuracy > 20) {
+                    LOG.info("Local Minama found, stop training");
+                    return;
+                }
             }
         }
     }
 
-    private void updateWeights(int i, double[] output_error_signal, double[] hidden_error_signal) {
-        for (int j = 0; j < config.hiddenSize(); j++) {
-            hiddenLayer[j].adjustBias(hidden_error_signal[j], config.learningRate());
-            hiddenLayer[j].adjustWeights(inputs[i], hidden_error_signal[j], config.learningRate());
+    private void updateWeights(int i, double[] output_error_signal, List<double[]> hidden_error_signals) {
+        double[] currentInput = inputs[i];
+
+        for (int j = 0; j < hiddenLayers.size(); j++) {
+            Neuron[] layer = hiddenLayers.get(j);
+            double[] errorSignal = hidden_error_signals.get(j);
+            for (int k = 0; k < layer.length; k++) {
+                layer[k].adjustBias(errorSignal[k], config.learningRate());
+                layer[k].adjustWeights(currentInput, errorSignal[k], config.learningRate());
+            }
+            currentInput = new double[layer.length];
+            for (int k = 0; k < layer.length; k++) {
+                currentInput[k] = layer[k].calculateOutput(inputs[i]);
+            }
         }
 
-        double[] hiddenOutputs = new double[config.hiddenSize()];
-        for (int k = 0; k < config.hiddenSize(); k++) {
-            hiddenOutputs[k] = hiddenLayer[k].calculateOutput(inputs[i]);
-        }
         for (int j = 0; j < config.outputSize(); j++) {
             outputLayer[j].adjustBias(output_error_signal[j], config.learningRate());
-            outputLayer[j].adjustWeights(hiddenOutputs, output_error_signal[j], config.learningRate());
+            outputLayer[j].adjustWeights(currentInput, output_error_signal[j], config.learningRate());
         }
     }
 

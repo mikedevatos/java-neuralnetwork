@@ -29,8 +29,10 @@ public class Main {
 
         var inputSize = datasetProvider.getFeatures()[0].length;
         var outputSize = datasetProvider.getLabels()[0].length;
+        List<Integer> hiddenLayersSize = List.of(12,6); // 2 hidden layers with 12 and 6 neurons
 
-        var neuralNetworkConfiguration = new Configuration(inputSize, 16, outputSize, 0.01, 10, ActivationFunction.LEAKY_RELU, ActivationFunction.SOFTMAX, LossFunction.CATEGORICAL_CROSS_ENTROPY);
+        var neuralNetworkConfiguration = new Configuration(inputSize, hiddenLayersSize, outputSize, 0.01, 1000, ActivationFunction.LEAKY_RELU, ActivationFunction.SOFTMAX, LossFunction.CATEGORICAL_CROSS_ENTROPY);
+
 
         double[][] features = datasetProvider.getFeatures();
         double[][] labels = datasetProvider.getLabels();
@@ -44,7 +46,7 @@ public class Main {
     private IDataProvider<?> getDataProvider(DataProvider dataProvider) {
         switch (dataProvider) {
             case IRIS -> {
-                return new IrisProvider(NORMALIZE, SHUFFLE, 0.8);
+                return new IrisProvider(NORMALIZE, SHUFFLE, 0.6);
             }
             case REAL_ESTATE -> {
                 int trainDataSize = 200;

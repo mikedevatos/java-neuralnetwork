@@ -12,7 +12,6 @@ public class Neuron {
         this.activationFunction = activationFunction;
         this.bias = Math.random() * 2 - 1; // initialize bias to a random value between -1 and 1
 
-        // Initialize weights to random values between -1 and 1
         for (int i = 0; i < inputSize; i++) {
             this.weights[i] = Math.random() * 2 - 1;
         }
