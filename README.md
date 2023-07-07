@@ -9,7 +9,7 @@ It is a simple Multi Layer Perceptron. As a activation functions I implemented S
  * Sigmoid, LeakyRelu, Tanh as activation functions. Sigmoid is used in the example.
  * Categorical Cross Entropy Loss function for multi class classification.
 
- ![Neural Network](https://upload.wikimedia.org/wikipedia/commons/9/99/Neural_network_example.svg)
+ ![Neural Network](https://hc-linux.eu/github/iris-nn.png)
 
 
 ## How it works.
@@ -52,12 +52,14 @@ You can implement your own DataProvider. Just implement the IDataProvider interf
 
 ## Configuration of the network
 
-There is a Configuration class where you can configure the network. Parameter you can configure are:
+There is a Configuration class where you can configure the network.
 
-new Configuration(inputSize, 128, outputSize, 0.01, 6,ActivationFunction.LEAKY_RELU,  ActivationFunction.SOFTMAX, LossFunction.CATEGORICAL_CROSS_ENTROPY);
+        List<Integer> hiddenLayersSize = List.of(12,6); // 2 hidden layers with 12 and 6 neurons
+
+        var neuralNetworkConfiguration = new Configuration(inputSize, hiddenLayersSize, outputSize, 0.01, 1000, ActivationFunction.LEAKY_RELU, ActivationFunction.SOFTMAX, LossFunction.CATEGORICAL_CROSS_ENTROPY);
 
    * inputSize: Size of the input layer (number of features, in my case with RealEstate it is 2 as I use price and rent)
-   * hiddenSize: Size of the hidden layer (number of neurons)
+   * hiddenLayersSize: Number of Hidden Layers and the size of each layer
    * outputSize: Size of the output layer (number of classes)
    * learningRate: Learning rate of the network
    * epochs: Number of epochs
