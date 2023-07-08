@@ -29,9 +29,11 @@ public class Main {
 
         var inputSize = datasetProvider.getFeatures()[0].length;
         var outputSize = datasetProvider.getLabels()[0].length;
-        List<Integer> hiddenLayersSize = List.of(12,6); // 2 hidden layers with 12 and 6 neurons
+        var learningRate = 0.01;
+        var epochs = 100;
+        List<Integer> hiddenLayersSize = List.of(12,6);
 
-        var neuralNetworkConfiguration = new Configuration(inputSize, hiddenLayersSize, outputSize, 0.01, 1000, ActivationFunction.LEAKY_RELU, ActivationFunction.SOFTMAX, LossFunction.CATEGORICAL_CROSS_ENTROPY);
+        var neuralNetworkConfiguration = new Configuration(inputSize, hiddenLayersSize, outputSize, learningRate, epochs, ActivationFunction.LEAKY_RELU, ActivationFunction.SOFTMAX, LossFunction.CATEGORICAL_CROSS_ENTROPY);
 
 
         double[][] features = datasetProvider.getFeatures();
